@@ -1,5 +1,16 @@
 var express = require('express');
 var fetch = require('node-fetch');
+var telnet = require('telnet-client');
+var connection = new telnet();
+
+var params = {
+
+	host: '192.168.0.177',
+	port: '23',
+	shellPrompt: '/ #',
+	timeout: 1500,
+	negotiationMandatory: false
+};
 
 function init(model, config) {
 	model.drive = {
@@ -58,8 +69,35 @@ function init(model, config) {
 		});
 	});
 
+	router.get('/telnet', (req,res) => {
+		connection.on('ready', (prompt) => {
+			console.log(prompt);
+			connection.exec('test', (err, response) => {
+				console.log('err', err);
+				res.json(response);
+			});
+		});
+
+		connection.on('data', (data) => {
+			console.log(data.toString())
+		})
+
+		console.log('about to connect')
+		connection.connect(params)
+		.then(function(a) {
+			console.log('successfully connected', a)
+		})
+		.catch(function(err){
+			console.log('error', err);
+		});
+
+		res.json({a: 23452345})
+	});
+
 	console.log('-> drive server started');
 	return router;
 }
+
+// to use this, comment out the if (this.telnetState === 'standby') line lol in telnet-client/lib/index.js
 
 module.exports = {init};
